@@ -5,6 +5,11 @@ export default defineConfig({
   assets: "assets",
   outDir: "dist",
   target: "web",
+  targets: {
+    web: {
+      html: "./index.html"
+    }
+  },
   stage: {
     width: 750,
     height: 1334,

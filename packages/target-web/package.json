@@ -17,6 +17,7 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "dependencies": {
+    "@egreter/diagnostics": "workspace:*",
     "@egreter/project": "workspace:*",
     "vite": "^8.3.0"
   }

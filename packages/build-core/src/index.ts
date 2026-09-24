@@ -15,11 +15,6 @@ async function assertFile(file: string, code: string, message: string): Promise<
 
 export async function validateProject(project: EgreterProject): Promise<void> {
   await assertFile(
-    path.join(project.root, "index.html"),
-    "E_INDEX_NOT_FOUND",
-    "Modern Egreter projects require index.html."
-  );
-  await assertFile(
     path.resolve(project.root, project.config.entry),
     "E_ENTRY_NOT_FOUND",
     `Egreter entry file was not found: ${project.config.entry}`
@@ -41,7 +36,7 @@ export async function devProject(options: DevProjectOptions = {}): Promise<ViteD
   const project = await loadProject(options.project, "serve", "development");
   await validateProject(project);
 
-  const server = await createServer(createWebViteConfig(project, options));
+  const server = await createServer(await createWebViteConfig(project, options));
   await server.listen();
   return server;
 }
@@ -53,13 +48,17 @@ export interface BuildProjectOptions {
 export async function buildProject(options: BuildProjectOptions = {}): Promise<EgreterProject> {
   const project = await loadProject(options.project, "build", "production");
   await validateProject(project);
-  await viteBuild(createWebViteConfig(project));
+  await viteBuild(await createWebViteConfig(project));
   return project;
 }
 
 export async function cleanProject(input = process.cwd()): Promise<string> {
   const project = await loadProject(input, "build", "production");
   const output = path.resolve(project.root, project.config.outDir);
-  await rm(output, { recursive: true, force: true });
+  const generated = path.resolve(project.root, ".egreter");
+  await Promise.all([
+    rm(output, { recursive: true, force: true }),
+    rm(generated, { recursive: true, force: true })
+  ]);
   return output;
 }
