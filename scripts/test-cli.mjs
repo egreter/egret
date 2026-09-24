@@ -183,6 +183,10 @@ async function main() {
 
   const pnpmVersion = await run("pnpm", ["--version"], { capture: true });
   report.pnpm = pnpmVersion.stdout.trim();
+  const pnpmMajor = Number(report.pnpm.split(".")[0]);
+  if (!Number.isInteger(pnpmMajor) || pnpmMajor < 12) {
+    throw new Error(`pnpm 12+ is required. Current: ${report.pnpm}`);
+  }
 
   await run("pnpm", ["build"]);
 
@@ -227,6 +231,7 @@ async function main() {
   if (builtJavaScript.length === 0) {
     throw new Error("Build completed without emitting JavaScript.");
   }
+  await assertFile(`${builtJavaScript[0]}.map`);
 
   if (!skipDev) {
     await verifyDevServer();
