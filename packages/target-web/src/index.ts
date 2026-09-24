@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { EgreterError } from "@egreter/diagnostics";
 import type { EgreterProject } from "@egreter/project";
@@ -186,17 +186,6 @@ function createHostPlugin(hostFile: string, bootstrapUrl: string, projectRoot: s
     },
     transformIndexHtml(html) {
       return injectEntry(html);
-    },
-    generateBundle(_options, bundle) {
-      for (const [key, output] of Object.entries(bundle)) {
-        if (output.type !== "asset" || !output.fileName.endsWith(".html") || output.fileName === "index.html") {
-          continue;
-        }
-
-        delete bundle[key];
-        output.fileName = "index.html";
-        bundle["index.html"] = output;
-      }
     }
   };
 }
@@ -270,4 +259,51 @@ export async function createWebViteConfig(
       }
     }
   };
+}
+
+
+async function findHtmlOutputs(directory: string): Promise<string[]> {
+  const outputs: string[] = [];
+  const entries = await readdir(directory, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      outputs.push(...(await findHtmlOutputs(file)));
+    } else if (entry.name.endsWith(".html")) {
+      outputs.push(file);
+    }
+  }
+
+  return outputs;
+}
+
+export async function finalizeWebBuild(project: EgreterProject): Promise<void> {
+  const outDir = path.resolve(project.root, project.config.outDir);
+  const expected = path.join(outDir, "index.html");
+
+  if (await exists(expected)) {
+    return;
+  }
+
+  const htmlOutputs = await findHtmlOutputs(outDir);
+  if (htmlOutputs.length !== 1) {
+    throw new EgreterError(
+      "E_WEB_HTML_OUTPUT_INVALID",
+      `Expected one Web HTML output, found ${htmlOutputs.length}.`,
+      outDir
+    );
+  }
+
+  const source = htmlOutputs[0];
+  if (!source) {
+    throw new EgreterError(
+      "E_WEB_HTML_OUTPUT_MISSING",
+      "Web build did not emit an HTML host page.",
+      outDir
+    );
+  }
+
+  await rename(source, expected);
+  await rm(path.join(outDir, ".egreter"), { recursive: true, force: true });
 }

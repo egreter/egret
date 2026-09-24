@@ -41,3 +41,18 @@ pnpm test:cli -- --skip-dev
 ~~~
 
 如果失败，请把终端错误以及 `.egreter-test/report.json` 一起反馈。后续开发应优先扩展这个脚本，而不是把人工步骤不断写进文档。
+
+
+## Web host / SDK bootstrap coverage
+
+The same `test:cli` command also exercises the advanced Web host path without network access:
+
+- removes the generated project's root `index.html`;
+- forces `targets.web.html: false` and verifies a default host page is generated;
+- serves a local classic SDK from `assets/vendor-sdk.js`;
+- configures custom script attributes;
+- configures `before-scripts`, `before-entry`, and `after-entry` bootstrap modules;
+- verifies the generated bootstrap module is available from the dev server;
+- verifies the production build still emits `dist/index.html` and the local SDK asset.
+
+This fixture is intentionally local so CLI verification does not depend on a third-party CDN being reachable.

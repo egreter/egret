@@ -2,7 +2,7 @@ import { access, rm } from "node:fs/promises";
 import path from "node:path";
 import { EgreterError } from "@egreter/diagnostics";
 import { loadProject, type EgreterProject } from "@egreter/project";
-import { createWebViteConfig, type WebTargetOverrides } from "@egreter/target-web";
+import { createWebViteConfig, finalizeWebBuild, type WebTargetOverrides } from "@egreter/target-web";
 import { build as viteBuild, createServer, type ViteDevServer } from "vite";
 
 async function assertFile(file: string, code: string, message: string): Promise<void> {
@@ -49,6 +49,7 @@ export async function buildProject(options: BuildProjectOptions = {}): Promise<E
   const project = await loadProject(options.project, "build", "production");
   await validateProject(project);
   await viteBuild(await createWebViteConfig(project));
+  await finalizeWebBuild(project);
   return project;
 }
 
