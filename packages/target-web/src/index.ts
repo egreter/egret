@@ -107,7 +107,7 @@ async function loadExternalScript(descriptor) {
     script.addEventListener("load", resolve, { once: true });
     script.addEventListener(
       "error",
-      () => reject(new Error(`Unable to load external script: ${descriptor.src}`)),
+      () => reject(new Error("Unable to load external script: " + descriptor.src)),
       { once: true }
     );
 

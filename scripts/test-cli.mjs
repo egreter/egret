@@ -78,6 +78,15 @@ async function assertFile(file) {
   await access(file);
 }
 
+async function assertMissing(file) {
+  try {
+    await access(file);
+  } catch {
+    return;
+  }
+  throw new Error(`Expected path to be absent: ${file}`);
+}
+
 async function findJavaScriptFiles(directory) {
   const found = [];
   const entries = await readdir(directory, { withFileTypes: true });
@@ -161,6 +170,29 @@ async function verifyDevServer() {
     if (!assetResponse.ok) {
       throw new Error(`Dev server asset request failed: ${assetResponse.status}`);
     }
+
+    const vendorResponse = await fetch(`http://127.0.0.1:${port}/vendor-sdk.js`);
+    if (!vendorResponse.ok) {
+      throw new Error(`Dev server vendor SDK request failed: ${vendorResponse.status}`);
+    }
+
+    const bootstrapResponse = await fetch(
+      `http://127.0.0.1:${port}/.egreter/target-web/bootstrap.js`
+    );
+    if (!bootstrapResponse.ok) {
+      throw new Error(`Dev server bootstrap request failed: ${bootstrapResponse.status}`);
+    }
+    const bootstrap = await bootstrapResponse.text();
+    for (const expected of [
+      "before-scripts.ts",
+      "before-entry.ts",
+      "after-entry.ts",
+      "vendor-sdk.js"
+    ]) {
+      if (!bootstrap.includes(expected)) {
+        throw new Error(`Generated bootstrap is missing: ${expected}`);
+      }
+    }
   } finally {
     await stopChild(child);
   }
@@ -232,6 +264,97 @@ async function main() {
     throw new Error("Build completed without emitting JavaScript.");
   }
   await assertFile(`${builtJavaScript[0]}.map`);
+
+  // Web target advanced-host fixture:
+  // 1. force generated HTML (no project index.html)
+  // 2. load a classic local SDK from the public assets directory
+  // 3. run bootstrap modules before scripts, before entry and after entry
+  await mkdir(path.join(projectRoot, "src", "bootstrap"), { recursive: true });
+  await writeFile(
+    path.join(projectRoot, "src", "bootstrap", "before-scripts.ts"),
+    `export default function () {
+  (globalThis as any).__egreterOrder = ["before-scripts"];
+}
+`
+  );
+  await writeFile(
+    path.join(projectRoot, "src", "bootstrap", "before-entry.ts"),
+    `export default function () {
+  const global = globalThis as any;
+  if (!global.__vendorSdkLoaded) throw new Error("vendor SDK did not load before bootstrap");
+  global.__egreterOrder.push("before-entry");
+}
+`
+  );
+  await writeFile(
+    path.join(projectRoot, "src", "bootstrap", "after-entry.ts"),
+    `export default function () {
+  (globalThis as any).__egreterOrder.push("after-entry");
+}
+`
+  );
+  await writeFile(
+    path.join(projectRoot, "assets", "vendor-sdk.js"),
+    `globalThis.__vendorSdkLoaded = true;
+globalThis.__egreterOrder = globalThis.__egreterOrder || [];
+globalThis.__egreterOrder.push("vendor-script");
+`
+  );
+  await rm(path.join(projectRoot, "index.html"), { force: true });
+  await writeFile(
+    path.join(projectRoot, "egreter.config.ts"),
+    `import { defineConfig } from "@egreter/config";
+
+export default defineConfig({
+  entry: "src/main.ts",
+  assets: "assets",
+  outDir: "dist",
+  target: "web",
+  targets: {
+    web: {
+      html: false,
+      scripts: [
+        {
+          src: "/vendor-sdk.js",
+          id: "vendor-sdk",
+          inject: "head",
+          attributes: {
+            "data-egreter-test": "sdk"
+          }
+        }
+      ],
+      bootstrap: [
+        { file: "src/bootstrap/before-scripts.ts", phase: "before-scripts" },
+        { file: "src/bootstrap/before-entry.ts", phase: "before-entry" },
+        { file: "src/bootstrap/after-entry.ts", phase: "after-entry" }
+      ]
+    }
+  }
+});
+`
+  );
+
+  await run(process.execPath, [cli, "build", "."], { cwd: projectRoot });
+
+  await assertMissing(path.join(projectRoot, "index.html"));
+  await assertFile(path.join(projectRoot, "dist", "index.html"));
+  await assertFile(path.join(projectRoot, "dist", "vendor-sdk.js"));
+  await assertFile(path.join(projectRoot, ".egreter", "target-web", "bootstrap.js"));
+
+  const generatedBootstrap = await readFile(
+    path.join(projectRoot, ".egreter", "target-web", "bootstrap.js"),
+    "utf8"
+  );
+  const positions = [
+    generatedBootstrap.indexOf("before-scripts.ts"),
+    generatedBootstrap.indexOf("vendor-sdk.js"),
+    generatedBootstrap.indexOf("before-entry.ts"),
+    generatedBootstrap.indexOf("src/main.ts"),
+    generatedBootstrap.indexOf("after-entry.ts")
+  ];
+  if (positions.some((position) => position < 0)) {
+    throw new Error("Generated Web bootstrap does not contain every configured phase.");
+  }
 
   if (!skipDev) {
     await verifyDevServer();
