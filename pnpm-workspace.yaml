@@ -6,3 +6,4 @@ packages:
   - packages/target-web
   - packages/build-core
   - packages/cli
+  - .egreter-test/*

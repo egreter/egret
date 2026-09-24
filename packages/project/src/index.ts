@@ -1,6 +1,10 @@
 import { access } from "node:fs/promises";
 import path from "node:path";
-import { resolveConfig, type ResolvedEgreterConfig } from "@egreter/config";
+import {
+  resolveConfig,
+  type EgreterConfig,
+  type ResolvedEgreterConfig
+} from "@egreter/config";
 import { EgreterError } from "@egreter/diagnostics";
 import { loadConfigFromFile, type ConfigEnv } from "vite";
 
@@ -68,9 +72,6 @@ export async function loadProject(
   mode = command === "build" ? "production" : "development"
 ): Promise<EgreterProject> {
   const root = await findProjectRoot(input);
-  const configFile = CONFIG_FILES
-    .map((name) => path.join(root, name))
-    .find(async () => true);
 
   let selectedConfigFile: string | undefined;
   for (const name of CONFIG_FILES) {
@@ -93,6 +94,6 @@ export async function loadProject(
   return {
     root,
     configFile: selectedConfigFile,
-    config: resolveConfig(loaded.config)
+    config: resolveConfig(loaded.config as EgreterConfig)
   };
 }

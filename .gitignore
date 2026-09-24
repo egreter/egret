@@ -1,6 +1,7 @@
 packages/egret/test/libs
 TODO
 dist
+.egreter-test/
 # Logs
 *.log
 npm-debug.log*
