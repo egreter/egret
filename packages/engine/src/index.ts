@@ -47,6 +47,7 @@ export abstract class DisplayObject extends EventDispatcher {
   scaleY = 1;
   alpha = 1;
   visible = true;
+  pointerEnabled = true;
   width = 0;
   height = 0;
   parent: Container | null = null;
@@ -71,7 +72,7 @@ export abstract class DisplayObject extends EventDispatcher {
   }
 
   hitTestLocal(x: number, y: number): DisplayObject | null {
-    return this.visible && this.containsLocalPoint(x, y) ? this : null;
+    return this.visible && this.pointerEnabled && this.containsLocalPoint(x, y) ? this : null;
   }
 
   dispatchPointerEvent(event: EgreterPointerEvent): void {
@@ -133,7 +134,7 @@ export class Container extends DisplayObject {
       }
     }
 
-    return this.containsLocalPoint(x, y) ? this : null;
+    return this.pointerEnabled && this.containsLocalPoint(x, y) ? this : null;
   }
 }
 

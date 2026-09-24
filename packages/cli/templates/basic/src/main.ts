@@ -55,6 +55,7 @@ const buttonLabel = new TextField("Tap / click me", {
 });
 buttonLabel.x = 272;
 buttonLabel.y = 726;
+buttonLabel.pointerEnabled = false;
 content.addChild(buttonLabel);
 
 const status = new TextField("Asset loaded. Pointer input ready.", {

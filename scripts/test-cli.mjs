@@ -178,6 +178,9 @@ async function main() {
     throw new Error(`Node.js 24+ is required. Current: ${process.version}`);
   }
 
+  await rm(projectRoot, { recursive: true, force: true });
+  await mkdir(testRoot, { recursive: true });
+
   const pnpmVersion = await run("pnpm", ["--version"], { capture: true });
   report.pnpm = pnpmVersion.stdout.trim();
 
@@ -187,9 +190,6 @@ async function main() {
   if (!version.stdout.trim().startsWith("0.1.0")) {
     throw new Error(`Unexpected CLI version: ${version.stdout.trim()}`);
   }
-
-  await rm(projectRoot, { recursive: true, force: true });
-  await mkdir(testRoot, { recursive: true });
 
   await run(
     process.execPath,
