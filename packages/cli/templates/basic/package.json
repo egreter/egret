@@ -1,0 +1,20 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "egreter dev",
+    "build": "egreter build",
+    "clean": "egreter clean",
+    "doctor": "egreter doctor"
+  },
+  "dependencies": {
+    "@egreter/engine": "__EGRETER_PACKAGE_SPEC__"
+  },
+  "devDependencies": {
+    "@egreter/cli": "__EGRETER_PACKAGE_SPEC__",
+    "@egreter/config": "__EGRETER_PACKAGE_SPEC__",
+    "typescript": "^6.0.0"
+  }
+}

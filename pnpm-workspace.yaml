@@ -1,0 +1,9 @@
+packages:
+  - packages/engine
+  - packages/config
+  - packages/diagnostics
+  - packages/project
+  - packages/target-web
+  - packages/build-core
+  - packages/cli
+  - .egreter-test/*
