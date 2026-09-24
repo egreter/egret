@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111827" />
+    <title>__PROJECT_NAME__</title>
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        min-height: 100%;
+        background: #030712;
+        color: #f9fafb;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      #game {
+        display: block;
+        width: min(100vw, 562px);
+        max-height: 100vh;
+        touch-action: none;
+        box-shadow: 0 24px 80px rgb(0 0 0 / 45%);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game" aria-label="Egreter game canvas"></canvas>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

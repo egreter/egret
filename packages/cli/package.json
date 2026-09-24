@@ -1,0 +1,27 @@
+{
+  "name": "@egreter/cli",
+  "version": "0.1.0-dev.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "egreter": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "templates"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@egreter/build-core": "workspace:*",
+    "@egreter/diagnostics": "workspace:*",
+    "@egreter/project": "workspace:*"
+  }
+}
